@@ -12,11 +12,13 @@ import { mergeIntervals, type Interval } from '../src/intervals';
 
 // A first attempt at a generator. It has a problem: run the tests and read
 // the counterexample.
-const interval: fc.Arbitrary<Interval> = fc.tuple(fc.integer(), fc.integer());
+const interval: fc.Arbitrary<Interval> = fc.tuple(fc.integer(), fc.integer()).map(([a, b]) =>
+  (a <= b ? [a, b] : [b, a]) as Interval,
+);
 const intervalList = fc.array(interval);
 
 describe('mergeIntervals', () => {
-  // Pattern: invariant. Every input interval lies inside some output interval.
+  // Pattern: invariant.
   it('every input interval lies inside some output interval', () => {
     fc.assert(
       fc.property(intervalList, xs => {
@@ -26,6 +28,17 @@ describe('mergeIntervals', () => {
       }),
     );
   });
+  // Pattern: invariant.
+  it('Ensure output length is less than or equal to input'), () => {
+    fc.assert(
+      fc.property(intervalList, xs => {
+        const out = mergeIntervals(xs);
+        expect(out.length).toBeLessThanOrEqual(xs.length);
+      }),
+    );
+  };
+  //Algebraic: need to add to ensure that each tuple in output interval is sorted
+  //Metamorphic: Inputting a duplicating array has the same result as the original.
 
   // Add your properties here. Aim for at least one of each pattern:
   // invariant, algebraic, metamorphic, differential, conditional.
